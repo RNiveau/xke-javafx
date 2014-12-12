@@ -1,0 +1,19 @@
+apply plugin: 'java'
+apply from: 'http://dl.bintray.com/content/shemnon/javafx-gradle/0.4.0/javafx.plugin'
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+javafx {
+    appID 'XkeJavaFX'
+    appName 'Xebia JavaFX Application'
+    mainClass 'fr.xebia.xke.javafx.Main'
+}
+
+dependencies {
+ compile 'com.squareup.retrofit:retrofit:1.8.0'
+}
