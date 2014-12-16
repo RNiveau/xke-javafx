@@ -2,7 +2,7 @@ package fr.xebia.xke.javafx.utils;
 
 import fr.xebia.xke.javafx.Main;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
+import javafx.scene.Parent;
 
 import java.io.IOException;
 
@@ -11,11 +11,11 @@ import java.io.IOException;
  */
 public class JfxUtils {
 
-    static public Node loadFxml(String fxml) {
+    static public Parent loadFxml(String fxml) {
         FXMLLoader loader = new FXMLLoader();
         try {
             loader.setLocation(Main.class.getResource(fxml));
-            Node root = loader.load(Main.class.getResource(fxml).openStream());
+            Parent root = loader.load(Main.class.getResource(fxml).openStream());
             return root;
         } catch (IOException e) {
             throw new IllegalStateException("cannot load FXML screen", e);

@@ -1,10 +1,13 @@
 package fr.xebia.xke.javafx;
 
+import fr.xebia.xke.javafx.context.Context;
+import fr.xebia.xke.javafx.domain.XebiaCards;
+import fr.xebia.xke.javafx.services.api.IXebiaCardsService;
+import fr.xebia.xke.javafx.services.api.XebiaCardsServiceImpl;
 import fr.xebia.xke.javafx.utils.JfxUtils;
 import javafx.application.Application;
 import javafx.concurrent.Task;
 import javafx.scene.Group;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
@@ -25,38 +28,46 @@ public class Main extends Application {
     @Override
     @SuppressWarnings("serial")
     public void start(Stage primaryStage) {
-        primaryStage.setWidth(Screen.getPrimary().getVisualBounds().getWidth());
+        initPrimaryStage(primaryStage);
+        initContext(primaryStage);
+    }
+
+    private void initContext(Stage primaryStage) {
+        ExecutorService executorService;
+        final Stage progressBar = openLoadingWindow();
+
+        executorService = Executors.newSingleThreadExecutor();
+        Task<XebiaCards> task = new Task<XebiaCards>() {
+            @Override
+            protected XebiaCards call() throws Exception {
+                IXebiaCardsService xebiaCardsService = new XebiaCardsServiceImpl();
+                return xebiaCardsService.getCards();
+            }
+        };
+        task.setOnFailed((event) -> progressBar.close());
+        task.setOnSucceeded(workerStateEvent -> {
+            Context.getInstance().setXebiaCards((XebiaCards) workerStateEvent.getSource().getValue());
+            Context.getInstance().setPrimaryStage(primaryStage);
+            primaryStage.setScene(new Scene(JfxUtils.loadFxml("/fxml/screen.fxml")));
+            progressBar.close();
+        });
+        executorService.submit(task);
+        executorService.shutdown();
+    }
+
+    private void initPrimaryStage(Stage primaryStage) {
+        primaryStage.setWidth(600);
         primaryStage.setHeight(Screen.getPrimary().getVisualBounds()
                 .getHeight());
         primaryStage.setX(Screen.getPrimary().getVisualBounds().getMinX());
         primaryStage.setY(Screen.getPrimary().getVisualBounds().getMinY());
         primaryStage.setTitle("Xke JavaFX");
-        primaryStage.setScene(new Scene((Parent) JfxUtils.loadFxml("/fxml/screen.fxml")));
         primaryStage.show();
-
-        ExecutorService executorService;
-
-        final Stage progressBar = openLoadingWindow(primaryStage);
-
-        executorService = Executors.newSingleThreadExecutor();
-
-        Task<Void> task = new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                //https://raw.githubusercontent.com/Nilhcem/xebia-essentials-android/master/essentials-android/src/main/res/raw/cards_data.json
-                return null;
-            }
-        };
-        task.setOnFailed((event) -> progressBar.close());
-        task.setOnSucceeded(workerStateEvent -> progressBar.close());
-        executorService.submit(task);
-        executorService.shutdown();
     }
 
-    private Stage openLoadingWindow(Stage stage) {
+    private Stage openLoadingWindow() {
         final Stage progressBar = new Stage();
         progressBar.initModality(Modality.WINDOW_MODAL);
-        progressBar.initOwner(stage.getScene().getWindow());
         progressBar.setScene(new Scene(new Group(JfxUtils.loadFxml("/fxml/loading.fxml"))));
         progressBar.show();
         return progressBar;
